@@ -1,118 +1,83 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import {Dimensions, FlatList, StyleSheet, Text, View} from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const {height: SCREEN_HEIGHT} = Dimensions.get('screen');
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+const data = Array.from({length: 30}, (_, index) => ({
+  id: `${index + 1}`,
+  text: `Item ${index + 1}`,
+}));
 
-function Section({children, title}: SectionProps): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+const multiplier = 1.0;
+
+export default function App() {
+  const [animatedVerticalScroll, setAnimatedVerticalScroll] = React.useState(0);
+  // used to detect stutters
+  const previousValue = React.useRef(0);
+
+  const listAnimatedStyle = {
+    top:
+      animatedVerticalScroll * multiplier > SCREEN_HEIGHT * 0.7
+        ? 0
+        : SCREEN_HEIGHT * 0.7 - animatedVerticalScroll * multiplier,
+  };
+
+  const renderItem = ({item}) => (
+    <View style={styles.item}>
+      <Text>{item.text}</Text>
+    </View>
+  );
+
+  const scrollHandler = event => {
+    // logger to detect if there was a stutter
+    if (previousValue.current > event.nativeEvent.contentOffset.y) {
+      console.log(
+        `\nScrolling stuttered!\nPrevious offset was ${previousValue.current}\nCurrent offset is ${event.nativeEvent.contentOffset.y}\n`,
+      );
+    } else {
+      console.log(event.nativeEvent.contentOffset.y);
+    }
+    setAnimatedVerticalScroll(event.nativeEvent.contentOffset.y);
+    previousValue.current = event.nativeEvent.contentOffset.y;
+  };
+
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+    <View style={styles.container}>
+      <View style={styles.containerBehind}>
+        <Text>Multiplier: {multiplier}</Text>
+      </View>
+      <FlatList
+        data={data}
+        renderItem={renderItem}
+        style={[styles.listContainer, listAnimatedStyle]}
+        onScroll={scrollHandler}
+      />
     </View>
   );
 }
 
-function App(): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  containerBehind: {
+    width: '100%',
+    height: '100%',
+    flex: 1,
+    backgroundColor: 'red',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
+  listContainer: {
+    top: 0,
+    left: 0,
+    position: 'absolute',
+    zIndex: 10,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'green',
   },
-  highlight: {
-    fontWeight: '700',
+  item: {
+    height: 50,
   },
 });
-
-export default App;
